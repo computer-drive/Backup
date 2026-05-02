@@ -3,7 +3,7 @@ from ..protocol import Protocol
 import time
 from ..logger import Logger
 
-logger = Logger("ServerHandler", "server.log")
+logger = Logger("ServerHandler", "server.log") # type: ignore[assignment]
 
 def recv_exact(conn: socket, size: int):
     data = b""
@@ -13,6 +13,8 @@ def recv_exact(conn: socket, size: int):
 
 
 def handle_client(conn):
+    conn.settimeout(5)
+
     last_heartbeat = time.time()
 
     while True:
@@ -31,7 +33,8 @@ def handle_client(conn):
             continue
 
         if time.time() - last_heartbeat > 10:
-            logger.warning()
+            logger.warning("Client heartbeat timeout", "SERVER") # type: ignore[assignment]
+            conn.close()
             break
 
     conn.close()

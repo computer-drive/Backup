@@ -10,7 +10,7 @@ from .const import *
 class Database:
     def __init__(self, db_name: str):
         self.db_name = db_name
-        self.connection: sqlite3.Connection = None
+        self.connection: sqlite3.Connection = None #type: ignore[assignment]
 
 
     def connect(self):

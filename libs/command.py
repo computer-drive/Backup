@@ -3,7 +3,7 @@ class CommandManager:
     def __init__(self):
         self.commands = {}
 
-    def register_command(self, command: int, callback: callable):
+    def register_command(self, command: int, callback: callable): #type: ignore[assignment]
         self.commands[command] = callback
 
     def execute(self, command: int, payload_type: int, payload: bytes):
