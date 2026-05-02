@@ -41,7 +41,7 @@ class ThreadManager:
             thread.join()
 
             self.threads_kinds[kinds].remove(thread)
-            del self.threads[thread.name]
+            
 
     def join_all_threads(self):
         for kinds in self.threads_kinds:
