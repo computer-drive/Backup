@@ -3,8 +3,10 @@ import sqlite3
 import datetime
 import threading
 import queue
+import sys
 
-from ...const import *
+from .const import *
+
 class Database:
     def __init__(self, db_name: str):
         self.db_name = db_name
@@ -94,57 +96,65 @@ VALUES (?, ?, ?, ?, ?, ?)
         q.task_done()
 
     db.close()
-    
-        
-
-class Logger(logging.Logger):
-    def __init__(self, name: str, db_name: str):
-        super().__init__(name)
 
 
-        self.db_handler = DatabaseHandler(db_name)
-        self.addHandler(self.db_handler)
+class LoggerManager:
+    def __init__(self, db_name:str):
+        self.db_name = db_name
+        self.q = queue.Queue(maxsize=10000)
 
-        self.console_handler = logging.StreamHandler()
-        self.console_handler.setFormatter(ConsoleFormatter())
-        self.addHandler(self.console_handler)
+        self.worker_thread = threading.Thread(target=db_logger_worker, args=(self.db_name, self.q), daemon=False)
+        self.worker_thread.start()
 
-        self.q = self.db_handler.q
-
-    def log(self, level: int, msg: str, log_type:str, class_name: str):
-        super().log(level, msg, extra={'log_type': log_type, 'class_name': class_name})
-
-    def warning(self, msg: str, log_type:str, class_name: str):
-        self.log(logging.WARNING, msg, log_type, class_name)
-
-    def error(self, msg: str, log_type:str, class_name: str):
-        self.log(logging.ERROR, msg, log_type, class_name)
-        
-    def critical(self, msg: str, log_type:str, class_name: str):
-        self.log(logging.CRITICAL, msg, log_type,  class_name)
-
-    def info(self, msg: str, log_type:str, class_name: str):
-        self.log(logging.INFO, msg, log_type, class_name)
-
-    def debug(self, msg: str, log_type:str,  class_name: str):
-        self.log(logging.DEBUG, msg, log_type, class_name)
+    def get_logger(self, name: str):
+        return Logger(name, self.q, self.db_name)  
 
     def close(self):
         logging.shutdown()
         
         self.q.put(None)
         self.q.join()
+        self.worker_thread.join()
 
-        self.db_handler.worker_thread.join()
-  
+
+class Logger(logging.Logger):
+    def __init__(self, name: str,  q: queue.Queue, db_name: str = LOG_DATABASE_NAME,):
+        super().__init__(name)
+
+        self.db_handler = DatabaseHandler(db_name, q)
+        self.addHandler(self.db_handler)
+
+        self.console_handler = logging.StreamHandler(sys.stdout)
+        self.console_handler.setFormatter(ConsoleFormatter())
+        self.addHandler(self.console_handler)
+
+        self.class_name = name
+
+    def log(self, level: int, msg: str, log_type:str, class_name: str):
+        super().log(level, msg, extra={'log_type': log_type, 'class_name': class_name if class_name else self.class_name})
+
+    def warning(self, msg: str, log_type:str, class_name: str = None):#type: ignore
+        self.log(logging.WARNING, msg, log_type, class_name)
+
+    def error(self, msg: str, log_type:str, class_name: str = None):#type: ignore
+        self.log(logging.ERROR, msg, log_type, class_name)
+        
+    def critical(self, msg: str, log_type:str, class_name: str = None):#type: ignore
+        self.log(logging.CRITICAL, msg, log_type, class_name)
+
+    def info(self, msg: str, log_type:str, class_name: str = None): #type: ignore
+        self.log(logging.INFO, msg, log_type, class_name)
+
+    def debug(self, msg: str, log_type:str,  class_name: str = None): #type: ignore
+        self.log(logging.DEBUG, msg, log_type, class_name)
+
+
 
 class DatabaseHandler(logging.Handler):
-    def __init__(self, db_name: str):
+    def __init__(self, db_name: str, q: queue.Queue):
         super().__init__()
-
-        self.q = queue.Queue(maxsize=10000)
-        self.worker_thread = threading.Thread(target=db_logger_worker, args=(db_name, self.q), daemon=False)
-        self.worker_thread.start()
+        self.q = q
+        
 
     
 
@@ -188,13 +198,13 @@ class DatabaseHandler(logging.Handler):
                 level_int = 1
 
 
-        self.q.put((time_str, level_int, record.class_name, record.log_type, "unknown", record.getMessage()))
+        self.q.put((time_str, level_int, record.class_name, record.log_type, "unknown", record.getMessage())) #type: ignore
 
         
 class ConsoleFormatter(logging.Formatter):
     def __init__(self):
         super().__init__(
-            
+            LOG_FORMAT
         )
     def format(self, record: logging.LogRecord) -> str:
         match record.levelno:
@@ -218,26 +228,7 @@ class ConsoleFormatter(logging.Formatter):
         return super().format(record)
     
         
-if __name__ == '__main__':
-    import json
 
-    logger = Logger('test_logger')
-    
-
-    logger.info(json.dumps(
-        {
-            "ip": "127.0.0.1",
-            "userId": "114514"
-        }
-    ), "LOGIN_SUCCESS", "LOGIN")
-
-    logger.debug("debug_test", "DEBUG", "TEST")
-    logger.warning("warning_test", "WARNING", "TEST")
-    logger.error("error_test", "ERROR", "TEST")
-    logger.critical("critical_test", "CRITICAL", "TEST")
-
-    
-    logger.close()
 
 
     
