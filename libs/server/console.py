@@ -13,10 +13,13 @@ def command_input(stoppend_event: threading.Event, logger: Logger):
         match cmd:
             case "stop":
                 stoppend_event.set()
-                logger.debug("", "THREAD_STOPPED")
                 break
+            case "":
+                continue
             case _:
-                logger.debug(cmd, "COMMAND_UNKNOWN")
+                print("Unknown command")
+            
+
                 
                 
 
