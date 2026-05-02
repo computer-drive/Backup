@@ -111,11 +111,13 @@ class LoggerManager:
         return Logger(name, self.q, self.db_name)  
 
     def close(self):
-        logging.shutdown()
+        
         
         self.q.put(None)
         self.q.join()
         self.worker_thread.join()
+
+        logging.shutdown()
 
 
 class Logger(logging.Logger):

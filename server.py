@@ -29,7 +29,8 @@ def main():
 
         # 启动命令线程
         cmd_logger = logger_manager.get_logger("CONSOLE")
-        cmd_thread = thread_manager.create_thread(name="CONSOLE", target=command_input, args=(stoppend_event, cmd_logger))
+        cmd_thread = thread_manager.create_thread(name="CONSOLE", target=command_input,
+                                                   args=(stoppend_event, cmd_logger, thread_manager))
         cmd_thread.start()
 
         while not stoppend_event.is_set():
@@ -37,9 +38,12 @@ def main():
                 # 接受客户端连接
                 conn, addr = server.accept()
                 logger.info(json.dumps({"address": addr}), "CLIENT_CONNECTED", "SERVER")
+
+                # 创建日志
+                handler_logger = logger_manager.get_logger(f"CLIENT_{addr[0]}_{addr[1]}")
                 
                 # 启动处理线程
-                thread = thread_manager.create_thread(name="CLIENT", target=handle_client, args=(conn,), kinds="socket")
+                thread = thread_manager.create_thread(name="CLIENT", target=handle_client, args=(conn,handler_logger), kinds="socket")
                 thread.start()
 
             except KeyboardInterrupt:

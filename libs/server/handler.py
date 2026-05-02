@@ -2,8 +2,9 @@ from socket import socket
 from ..protocol import Protocol
 import time
 from ..logger import Logger
+import json
 
-logger = Logger("ServerHandler", "server.log") # type: ignore[assignment]
+
 
 def recv_exact(conn: socket, size: int):
     data = b""
@@ -12,13 +13,24 @@ def recv_exact(conn: socket, size: int):
     return data
 
 
-def handle_client(conn):
+def handle_client(conn: socket, logger: Logger):
     conn.settimeout(5)
 
     last_heartbeat = time.time()
 
     while True:
-        header = recv_exact(conn, 12)
+        try:
+            header = recv_exact(conn, 12)
+        except TimeoutError:
+            logger.warning(json.dumps(
+                {
+                    "client": conn.getpeername(),
+                }
+            ), "CLIENT_TIMEOUT") # type: ignore[assignment]
+            
+            break
+
+        
         if not header:
             break
 
@@ -33,8 +45,21 @@ def handle_client(conn):
             continue
 
         if time.time() - last_heartbeat > 10:
-            logger.warning("Client heartbeat timeout", "SERVER") # type: ignore[assignment]
+            logger.warning(json.dumps(
+                {
+                    "client": conn.getpeername(),
+                    "last_heartbeat": last_heartbeat,
+                }
+            ), "HEARTBEAT_TIMEOUT") # type: ignore[assignment]
             conn.close()
             break
+
+    
+
+    logger.info(json.dumps(
+        {
+            "client": conn.getpeername(),
+        }
+    ), "CLIENT_DISCONNECTED") # type: ignore[assignment]
 
     conn.close()
