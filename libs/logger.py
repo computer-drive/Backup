@@ -4,6 +4,7 @@ import datetime
 import threading
 import queue
 import sys
+from libs.thread import ThreadManager
 
 from .const import *
 
@@ -99,11 +100,11 @@ VALUES (?, ?, ?, ?, ?, ?)
 
 
 class LoggerManager:
-    def __init__(self, db_name:str):
+    def __init__(self, db_name:str, thread_manager: ThreadManager):
         self.db_name = db_name
         self.q = queue.Queue(maxsize=10000)
 
-        self.worker_thread = threading.Thread(target=db_logger_worker, args=(self.db_name, self.q), daemon=False)
+        self.worker_thread = thread_manager.create_thread(name="LOGGER", target=db_logger_worker, args=(self.db_name, self.q), daemon=False)
         self.worker_thread.start()
 
     def get_logger(self, name: str):
