@@ -7,24 +7,33 @@ import json
 from libs.server.handler import handle_client
 from libs.server.console import command_input
 from libs.thread import ThreadManager
+from libs.config import Config
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-thread_manager = ThreadManager()
-
-logger_manager = LoggerManager("log.db", thread_manager)
-logger = logger_manager.get_logger("server")
 
 def main():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    thread_manager = ThreadManager()
+
+    config = Config("config.json", True)
+    
+    logger_manager = LoggerManager(config.get("log.database"), thread_manager)
+    logger = logger_manager.get_logger("server")
+
+
     # 设置停止事件
     stoppend_event = threading.Event()
         
     try:
-        server.bind(("127.0.0.1", 8080))
-        server.listen(1)
-        server.settimeout(5)
+        server.bind((
+            config.get("server.address"),
+            config.get("server.port")
+            ))
+        
+        server.listen(5)
+        server.settimeout(10)
 
-        logger.info(json.dumps({"ip": "127.0.0.1", "port":"8080"}), "STARTED", "SERVER")
+        logger.info(json.dumps({"ip": config.get("server.address"), "port": config.get("server.port")}), "STARTED", "SERVER")
 
 
         # 启动命令线程
