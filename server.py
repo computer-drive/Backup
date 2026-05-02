@@ -6,9 +6,13 @@ import socket
 import json
 from libs.server.handler import handle_client
 from libs.server.console import command_input
+from libs.thread import ThreadManager
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-logger_manager = LoggerManager("log.db")
+thread_manager = ThreadManager()
+
+logger_manager = LoggerManager("log.db", thread_manager)
 logger = logger_manager.get_logger("server")
 
 def main():
@@ -22,11 +26,10 @@ def main():
 
         logger.info(json.dumps({"ip": "127.0.0.1", "port":"8080"}), "STARTED", "SERVER")
 
-        threads = []
 
         # 启动命令线程
         cmd_logger = logger_manager.get_logger("CONSOLE")
-        cmd_thread = threading.Thread(target=command_input, args=(stoppend_event, cmd_logger))
+        cmd_thread = thread_manager.create_thread(name="CONSOLE", target=command_input, args=(stoppend_event, cmd_logger))
         cmd_thread.start()
 
         while not stoppend_event.is_set():
@@ -36,8 +39,7 @@ def main():
                 logger.info(json.dumps({"address": addr}), "CLIENT_CONNECTED", "SERVER")
                 
                 # 启动处理线程
-                thread = threading.Thread(target=handle_client, args=(conn,))
-                threads.append(thread)
+                thread = thread_manager.create_thread(name="CLIENT", target=handle_client, args=(conn,), kinds="socket")
                 thread.start()
 
             except KeyboardInterrupt:
@@ -52,12 +54,12 @@ def main():
             
     finally:
         # 关闭服务器连接
+        logger.info("", "STOPPING_SERVER", "SERVER")
         server.close()
+
         # 等待所有线程结束
-        for thread in threads:
-            thread.join()
-        # 结束命令线程（deamon=True）
-        cmd_thread.join()
+        logger.info("", "STOPPING_SOCKET_THREADS", "SERVER")
+        thread_manager.join_threads("socket")
 
         # 记录服务器停止日志
         logger.info("", "STOPPED", "SERVER")
