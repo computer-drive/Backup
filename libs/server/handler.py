@@ -76,7 +76,7 @@ def handle_client(conn: socket, logger: Logger, stop_event: threading.Event):
 
         
         if not header: # 如果协议头为空，说明客户端关闭了连接
-            logger.warning(json.dumps(
+            logger.debug(json.dumps(
         {
             "client": conn.getpeername(),
         }

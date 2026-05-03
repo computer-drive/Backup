@@ -6,7 +6,7 @@ import threading
 import queue
 
 
-def input_worker(conn: socket):
+def input_worker(conn: socket.socket):
     while True:
         line = input(">> ")
         if line == "exit":
@@ -14,7 +14,7 @@ def input_worker(conn: socket):
         else:
             try:
                 conn.send(
-                    Protocol(0x5F86C001, PROTOCOL_COMMAND_TEST, PROTOCOL_PAYLOAD_STRING, 0, line.encode() ).
+                    Protocol(0x5F86C001, PROTOCOL_COMMAND.TEST, PROTOCOL_PAYLOAD_STRING, 0, line.encode() ).
                     encode()
                 )
                 
@@ -39,7 +39,7 @@ except Exception as e:
 
 print("connect success.")
 
-client.send(Protocol(0x5F86C001, PROTOCOL_COMMAND_HEARTBEAT, PROTOCOL_PAYLOAD_BINARY).encode())
+client.send(Protocol(0x5F86C001, PROTOCOL_COMMAND.HEARTBEAT, PROTOCOL_PAYLOAD_BINARY).encode())
 
 q = queue.Queue()
 input_worker_thread = threading.Thread(target=input_worker, args=(client,), daemon=True)
@@ -52,7 +52,7 @@ client.settimeout(5)
 def send_heartbeat():
     global last_heartbeat
     if last_heartbeat + 5 < time.time():
-        client.send(Protocol(0x5F86C001, PROTOCOL_COMMAND_HEARTBEAT, PROTOCOL_PAYLOAD_BINARY).encode())
+        client.send(Protocol(0x5F86C001, PROTOCOL_COMMAND.HEARTBEAT, PROTOCOL_PAYLOAD_BINARY).encode())
         last_heartbeat = time.time()
         print("sned heartbeat.")
 
@@ -76,11 +76,11 @@ while True:
         protocol = Protocol()
         payload_length = protocol.decode_header(header)
 
-        if protocol.command == PROTOCOL_COMMAND_DISCONNECT:
+        if protocol.command == PROTOCOL_COMMAND.DISCONNECT:
             print("server disconnect.")
             break
 
-        if protocol.command == PROTOCOL_COMMAND_SERVER_CLOSED:
+        if protocol.command == PROTOCOL_COMMAND.SERVER_CLOSED:
             print("server closed.")
             break
 
