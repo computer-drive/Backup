@@ -39,7 +39,8 @@ def main():
         # 启动命令线程
         cmd_logger = logger_manager.get_logger("CONSOLE")
         cmd_thread = thread_manager.create_thread(name="CONSOLE", target=command_input,
-                                                   args=(stop_event, cmd_logger, thread_manager))
+                                                   args=(stop_event, cmd_logger, thread_manager, server),
+                                              )
         cmd_thread.start()
 
         while not stop_event.is_set():
@@ -62,6 +63,9 @@ def main():
             except socket.timeout:
                 continue
 
+            except OSError:
+                continue
+
     except Exception as e:
         logger.error(str(e), "SERVER")
             
@@ -73,6 +77,9 @@ def main():
         # 等待所有线程结束
         logger.info("", "STOPPING_SOCKET_THREADS", "SERVER")
         thread_manager.join_threads("socket")
+
+
+        cmd_thread.join()
 
         # 记录服务器停止日志
         logger.info("", "STOPPED", "SERVER")
