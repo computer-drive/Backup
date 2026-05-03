@@ -21,6 +21,7 @@ def command_input(stoppend_event: threading.Event, logger: Logger, thread_manage
 
         if cmd[0] == "stop":
             stoppend_event.set()
+            print("Stopping...")
             break
 
         elif cmd[0] == "thread":
