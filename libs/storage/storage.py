@@ -1,0 +1,66 @@
+from ..logger import Logger
+from dataclasses import dataclass
+import os
+import json
+
+@dataclass
+class Storage:
+    path: str
+    max_size: int
+    current_size: int = 0
+
+class StorageManager:
+    def __init__(self, logger: Logger):
+        self.logger = logger
+        self.storages: list[Storage] = []
+
+    def add_storage(self, path: str, max_size: int):
+        '''
+        添加一个存储路径，检查有效性与大小。
+
+        Return: bool 是否成功添加
+        '''
+        storage = Storage(path, max_size)
+
+        if not self._check(storage):
+            return False
+        
+        self.storages.append(storage)
+
+        return True
+
+    def _check(self, storage: Storage):
+
+        if not (os.path.exists(storage.path) and os.path.isdir(storage.path)):
+            self.logger.error(json.dumps({
+                "storage_path": storage.path,
+            }), "INVALID_STORAGE")
+            return False
+
+        storage.current_size = os.path.getsize(storage.path)
+
+        if not storage.current_size >= storage.max_size:
+            self.logger.error(json.dumps({
+                "storage_path": storage.path,
+                "current_size": storage.current_size,
+                "max_size": storage.max_size,
+            }), "STORAGE_FULL")
+            return False
+        
+        return True
+    
+
+            
+
+        
+
+
+    
+    
+
+
+
+
+        
+
+
