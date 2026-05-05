@@ -38,7 +38,9 @@ def main():
     
     try:
         if stop_event.is_set():
+            logger.debug("stop_event are setted before server start", "SERVER_DEBUG")
             raise KeyboardInterrupt
+        
         server.bind((
             config.get("server.address"),
             config.get("server.port")
@@ -54,6 +56,7 @@ def main():
             try:
                 # 接受客户端连接
                 conn, addr = server.accept()
+            
                 logger.info(json.dumps({"address": addr}), "CLIENT_CONNECTED", "SERVER")
 
                 # 创建日志
