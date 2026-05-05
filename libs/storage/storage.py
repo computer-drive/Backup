@@ -39,7 +39,7 @@ class StorageManager:
 
         storage.current_size = os.path.getsize(storage.path)
 
-        if not storage.current_size >= storage.max_size:
+        if storage.current_size >= storage.max_size:
             self.logger.error(json.dumps({
                 "storage_path": storage.path,
                 "current_size": storage.current_size,
