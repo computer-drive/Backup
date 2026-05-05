@@ -17,7 +17,14 @@ def init_storages(config: Config, logger: Logger):
 
     for storage in storages:
         if "path" in storage and "max_size" in storage:
-            storage_manager.add_storage(storage["path"], storage["max_size"])
+            if not storage_manager.add_storage(storage["path"], storage["max_size"]):
+                logger.error(json.dumps({
+                    "storage_path": storage["path"],
+                }), "STORAGE_ADD_FAILED")
+            else:
+                logger.info(json.dumps({
+                    "storage_path": storage["path"],
+                }), "STORAGE_ADDED")
         else:
             logger.critical(json.dumps({
             "storages": storages,
