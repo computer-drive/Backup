@@ -32,6 +32,12 @@ class ThreadManager:
     def get_all_threads(self):
         return self.threads.values()
     
+    def join_thread(self, name:str):
+        thread = self.threads.get(name)
+        if thread is not None:
+            thread.join()
+            self.threads.pop(name)
+    
     def join_threads(self, kinds: str):
         threads = self.threads_kinds.get(kinds)
         if threads is None:

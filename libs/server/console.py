@@ -4,10 +4,10 @@ from ..logger import Logger
 from ..thread import ThreadManager
 import socket
 
-def command_input(stoppend_event: threading.Event, logger: Logger, thread_manager: ThreadManager, server: socket.socket):
+def command_input(stoppend_event: threading.Event, logger: Logger, thread_manager: ThreadManager, server: socket.socket, stop_event: threading.Event):
     
 
-    while True:
+    while not stoppend_event.is_set():
         try:
             cmd = input(">> ")
         except EOFError:
