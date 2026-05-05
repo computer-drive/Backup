@@ -1,6 +1,7 @@
 from .storage import StorageManager
 from ..config import Config
 from ..logger import Logger
+from .exceptions import InvalidStorageError, StorageFullError
 import json
 from threading import Event
 
@@ -15,16 +16,41 @@ def init_storages(config: Config, logger: Logger):
     
     storage_manager = StorageManager(logger)
 
+    # 遍历存储
     for storage in storages:
+        # 检查“path”和“max_size”是否存在
         if "path" in storage and "max_size" in storage:
-            if not storage_manager.add_storage(storage["path"], storage["max_size"]):
+            # 存在，尝试添加存储路径
+
+            try:
+                storage_manager.add_storage(storage["path"], storage["max_size"])
+            except InvalidStorageError as e:
+                # 存储路径错误
                 logger.error(json.dumps({
-                    "storage_path": storage["path"],
-                }), "STORAGE_ADD_FAILED")
-            else:
-                logger.info(json.dumps({
-                    "storage_path": storage["path"],
-                }), "STORAGE_ADDED")
+                    "storage_path": e.storage_path,
+                }), "INVALID_STORAGE")
+                return 
+            
+            except StorageFullError as e:
+                # 存储已满
+
+                logger.error(json.dumps({
+                    "storage_path": e.storage_path,
+                    "current_size": e.current_size,
+                    "max_size": e.max_size,
+                }), "STORAGE_FULL")
+                return
+            
+            
+            # if not storage_manager.add_storage(storage["path"], storage["max_size"]):
+            #     logger.error(json.dumps({
+            #         "storage_path": storage["path"],
+            #     }), "STORAGE_ADD_FAILED")
+            # else:
+            #     logger.info(json.dumps({
+            #         "storage_path": storage["path"],
+            #     }), "STORAGE_ADDED")
+            
         else:
             logger.critical(json.dumps({
             "storages": storages,
