@@ -5,7 +5,7 @@ import json
 from threading import Event
 
 def init_storages(config: Config, logger: Logger):
-    storages = config.get("storages")
+    storages = config.get("storages.storage")
 
     if storages is None or not isinstance(storages, list):
         logger.critical(json.dumps({
@@ -22,7 +22,7 @@ def init_storages(config: Config, logger: Logger):
             logger.critical(json.dumps({
             "storages": storages,
         }), "INVALID_CONFIG")
-        return
+            return
 
     return storage_manager
 
@@ -35,9 +35,11 @@ def storage_worker(logger: Logger, config: Config, stop_event: Event):
     storage_manager = init_storages(config, logger)
 
     if storage_manager is None:
-        # print("test")
+        logger.debug("StorageManager initialization failed, stopping storage worker", "STORAGE_DEBUG")
         stop_event.set()
         return
+    
+    logger.debug("StorageManager initialized", "STORAGE_DEBUG")
     
     while not stop_event.is_set():
         pass
