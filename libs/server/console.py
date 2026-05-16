@@ -23,7 +23,7 @@ def command_input(stoppend_event: threading.Event, logger: Logger, thread_manage
             stoppend_event.set()
             
             server.close()
-            print("Stopping...")
+            logger.debug("Stopping...", "CONSOLE_DEBUG")
             break
 
         elif cmd[0] == "thread":
