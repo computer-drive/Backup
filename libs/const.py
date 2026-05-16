@@ -1,5 +1,22 @@
 import struct
 
+DEFAULT_SERVER_CONFIG = {
+    "server.address": "0.0.0.0",
+    "server.port": 8080,
+    "log.database": "log.db",
+    "storages.storage": [],
+    "storage.index_database": "storage.db",
+    "handle_error": {
+        "invalid_storage_path": 1,
+        "storage_full": 1,
+    }
+}
+
+DEFAULT_CLIENT_CONFIG = {
+    "server.address": "localhost",
+    "server.port": 8080
+}
+
 LOG_FORMAT = "%(color)s[%(asctime)s/%(class_name)s][%(levelname)s](%(log_type)s) %(message)s%(reset)s"
 
 LOG_DATABASE_NAME = "log.db"

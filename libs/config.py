@@ -1,14 +1,5 @@
 import json
-
-default_server_config = {
-    "server.address": "0.0.0.0",
-    "server.port": 8080,
-    "log.database": "log.db"
-}
-
-default_client_config = {
-
-}
+from .const import *
 
 class Config:
     def __init__(self, config_file: str = "config.json", is_server: bool = True):
@@ -27,8 +18,8 @@ class Config:
 
     def get(self, key: str):
         if self.is_server:
-            return self.config.get(key, default_server_config.get(key))
-        return self.config.get(key, default_client_config.get(key))
+            return self.config.get(key, DEFAULT_SERVER_CONFIG.get(key))
+        return self.config.get(key, DEFAULT_CLIENT_CONFIG.get(key))
     
     def set(self, key, value):
         self.config[key] = value
